@@ -1,0 +1,110 @@
+<div class="container py-4">
+
+  <h1 class="fw-bold text-primary mb-4 text-center">🌍 Tableau de bord Météo</h1>
+
+  <div class="row justify-content-center mb-4">
+    <div class="col-md-8">
+      <div class="input-group shadow-sm">
+        <input type="text" class="form-control form-control-lg border-primary"
+               placeholder="Rechercher une ville (ex: Paris, Lyon)..."
+               [(ngModel)]="recherche"
+               (keyup.enter)="onChercher()">
+        <button class="btn btn-primary px-4" (click)="onChercher()">🔍 Chercher</button>
+      </div>
+
+      @if (erreur()) {
+        <div class="alert alert-danger mt-3">{{ erreur() }}</div>
+      }
+    </div>
+  </div>
+
+  @if (enChargement()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+        <span class="visually-hidden">Chargement...</span>
+      </div>
+      <h5 class="mt-3 text-primary">Recherche en cours...</h5>
+    </div>
+  }
+
+  @if (!enChargement() && villes().length > 0) {
+    <div class="row">
+
+      <div class="col-md-4 mb-4">
+        <h5 class="text-muted mb-3">Résultats de recherche</h5>
+        <div class="list-group shadow-sm">
+          @for (v of villes(); track v.latitude + ',' + v.longitude) {
+            <button class="list-group-item list-group-item-action"
+                    [class.active]="villeSelectionnee()?.latitude === v.latitude && villeSelectionnee()?.longitude === v.longitude"
+                    (click)="onSelectionnerVille(v)">
+              <strong class="d-block">{{ v.name }}</strong>
+              <small>{{ v.country }}</small><br>
+              <small class="opacity-75">
+                📍 {{ v.latitude | number:'1.2-4' }}, {{ v.longitude | number:'1.2-4' }}
+              </small>
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="col-md-8">
+
+        @if (enChargementMeteo()) {
+          <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <h6 class="mt-3 text-primary">Récupération de la météo...</h6>
+          </div>
+        }
+
+        @if (meteoData(); as m) {
+          @if (!enChargementMeteo()) {
+            <div class="card weather-card shadow-lg border-0 overflow-hidden h-100">
+
+              <div class="card-body text-white text-center"
+                   style="background: linear-gradient(135deg, #4A90E2 0%, #003A8C 100%);">
+
+                <h2 class="display-5 fw-bold mb-0 mt-3">{{ villeSelectionnee()?.name }}</h2>
+                <p class="lead">{{ villeSelectionnee()?.country }}</p>
+
+                <div class="display-1 my-3">{{ getWeatherIcon(m.current.weather_code) }}</div>
+                <h1 class="display-3 fw-bold">{{ m.current.temperature_2m }}°C</h1>
+
+                <div class="row mt-4 pt-4 border-top border-light border-opacity-25">
+                  <div class="col-4">
+                    <small>💧 Humidité</small><br>
+                    <strong>{{ m.current.relative_humidity_2m }}%</strong>
+                  </div>
+                  <div class="col-4">
+                    <small>💨 Vent</small><br>
+                    <strong>{{ m.current.wind_speed_10m }} km/h</strong>
+                  </div>
+                  <div class="col-4">
+                    <small>🌡️ Ressenti</small><br>
+                    <strong>{{ m.current.apparent_temperature }}°C</strong>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card-footer bg-white p-3">
+                <h6 class="text-muted mb-3 fw-bold">📅 7 prochains jours</h6>
+                <div class="d-flex overflow-auto gap-2 pb-2">
+                  @for (date of m.daily.time; track date; let i = $index) {
+                    <div class="forecast-day p-2 text-center rounded bg-light border" style="min-width: 90px;">
+                      <small class="d-block text-dark fw-bold">{{ date | date:'dd/MM' }}</small>
+                      <div class="fs-4 my-1">{{ getWeatherIcon(m.daily.weather_code[i]) }}</div>
+                      <small class="text-danger fw-bold">{{ m.daily.temperature_2m_max[i] }}°</small>
+                      <small class="text-muted mx-1">/</small>
+                      <small class="text-info">{{ m.daily.temperature_2m_min[i] }}°</small>
+                    </div>
+                  }
+                </div>
+              </div>
+
+            </div>
+          }
+        }
+
+      </div>
+    </div>
+  }
+</div>
